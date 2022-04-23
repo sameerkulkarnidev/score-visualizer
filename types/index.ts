@@ -84,6 +84,7 @@ export type TimeSeriesEntry = {
  */
 export type TeamsData = {
   [key: TeamID]: Array<{
+    name: string;
     time: number;
     data: MatchStats;
   }>;

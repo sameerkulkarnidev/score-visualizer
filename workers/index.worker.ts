@@ -54,6 +54,7 @@ function getDataByTeams(matchList: MatchList, filters: Filters) {
         (!selectedMode?.size || selectedMode.has("home"))
       ) {
         acc[val["home"]].push({
+          name: val["home"],
           time,
           data: {
             mode: "home",
@@ -67,6 +68,7 @@ function getDataByTeams(matchList: MatchList, filters: Filters) {
         (!selectedMode?.size || selectedMode.has("visitor"))
       ) {
         acc[val["visitor"]].push({
+          name: val["visitor"],
           time,
           data: {
             mode: "visitor",

@@ -92,14 +92,16 @@ export const LineChart = (props: Props) => {
     // set the Y axis generator
     const y = d3
       .scaleLinear()
-      .domain([
-        matchList.reduce((acc, val) => {
-          return Math.min(acc, val.pts_h, val.pts_v);
-        }, Number.MAX_SAFE_INTEGER),
-        matchList.reduce((acc, val) => {
-          return Math.max(acc, val.pts_h, val.pts_v);
-        }, 0),
-      ])
+      .domain(
+        matchList.reduce(
+          (acc, val) => {
+            acc[0] = Math.min(acc[0], val.pts_h, val.pts_v);
+            acc[1] = Math.max(acc[1], val.pts_h, val.pts_v);
+            return acc;
+          },
+          [Number.MAX_SAFE_INTEGER, 0]
+        )
+      )
       .range([height, 0]);
     svg.append("g").call(d3.axisLeft(y));
 
@@ -109,7 +111,7 @@ export const LineChart = (props: Props) => {
     const p = svg
       .append("g")
       .selectAll("g")
-      .data(Object.keys(dataByTeam).filter((p, i) => true))
+      .data(Object.keys(dataByTeam))
       .enter();
 
     // draw the individual line
@@ -133,7 +135,7 @@ export const LineChart = (props: Props) => {
     // plot the points
     p.append("g")
       .selectAll("g")
-      .data((d, i) => dataByTeam[d].map((e) => ({ ...e, name: d })))
+      .data((d) => dataByTeam[d])
       .enter()
       .append("circle")
       .attr("fill", "black")
