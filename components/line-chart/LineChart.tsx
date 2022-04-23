@@ -7,12 +7,17 @@ type Props = {
   /**
    * match data that need to be rendered
    */
-  data: WorkerResults;
+  data?: WorkerResults;
 
   /**
    * A boolean flag indicating whether the supplied data is still loading
    */
   isLoading?: boolean;
+
+  /**
+   * Content that will be displayed when there is not data to show
+   */
+  children?: React.ReactNode;
 };
 
 /**
@@ -22,7 +27,9 @@ type Props = {
  */
 export const LineChart = (props: Props) => {
   const {
-    data: { matchList, dataByTimeline, dataByTeam, teams },
+    data: { matchList, dataByTimeline, dataByTeam, teams } = {},
+    isLoading,
+    children,
   } = props;
 
   /**
@@ -31,10 +38,25 @@ export const LineChart = (props: Props) => {
    */
   const svgRef = useRef<SVGSVGElement>(null);
 
+  const hasData = teams?.length;
+
   /**
    * A function that actully renders the line chart
    */
   const renderChart = useCallback(() => {
+    /**
+     * exist early if data is not available
+     */
+    if (
+      !svgRef.current ||
+      !dataByTimeline?.length ||
+      !matchList?.length ||
+      !teams?.length ||
+      !dataByTeam
+    ) {
+      return;
+    }
+
     // clear the chart before rendering it
     d3.select(svgRef.current).selectChildren().remove();
 
@@ -119,6 +141,7 @@ export const LineChart = (props: Props) => {
       .attr("cx", (d) => x(d.time))
       .attr("cy", (d) => y(Number(d.data.points)))
       .attr("class", "cursor-pointer")
+      .attr("tabindex", "0")
       .append("title")
       .text(
         (d) =>
@@ -128,7 +151,7 @@ export const LineChart = (props: Props) => {
       );
 
     return svg;
-  }, [dataByTeam, dataByTimeline, matchList, teams.length]);
+  }, [dataByTeam, dataByTimeline, matchList, teams?.length]);
 
   /**
    * A window resize event handler which will take care of updating the
@@ -156,5 +179,19 @@ export const LineChart = (props: Props) => {
     };
   }, [onWindowResize]);
 
-  return <svg className="w-full h-full" ref={svgRef}></svg>;
+  if (isLoading) {
+    return (
+      <div className="w-full h-full flex justify-center items-center">
+        Loading
+      </div>
+    );
+  }
+
+  return hasData ? (
+    <svg className="w-full h-full" ref={svgRef}></svg>
+  ) : (
+    <div className="w-full h-full flex justify-center items-center">
+      {children}
+    </div>
+  );
 };

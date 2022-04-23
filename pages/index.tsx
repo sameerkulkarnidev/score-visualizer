@@ -1,9 +1,10 @@
 import type { NextPage } from "next";
 import Head from "next/head";
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useRef, useState } from "react";
 import Button from "../components/button";
 import FiltersPanel from "../components/filters-panel/FiltersPanel";
 import { LineChart } from "../components/line-chart";
+import Modal from "../components/modal";
 import { useMatchData } from "../hooks/useMatchData";
 import { Filters } from "../types";
 
@@ -18,13 +19,23 @@ const Home: NextPage = () => {
   /**
    * data handler inputs/options
    */
-  const { data, isInitialised, isLoading, initialise } = useMatchData(filters);
+  const {
+    rawData = "",
+    data,
+    isInitialised,
+    isLoading,
+    initialise,
+  } = useMatchData(filters);
 
   /**
    * store the status of the filters visiblity
    */
   const [isFiltersOpen, setIsFiltersOpen] = useState<boolean>(false);
 
+  /**
+   * const is data modal open
+   */
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   /**
    * A callback function that will be triggered when user uploads
    * a data file
@@ -113,6 +124,38 @@ const Home: NextPage = () => {
     []
   );
 
+  /**
+   * A handler function to open data editor
+   */
+  const onOpenDataModal = useCallback(() => {
+    setIsModalOpen(true);
+  }, []);
+
+  /**
+   * A handler function to close data editor
+   */
+  const onCloseDataModal = useCallback(() => {
+    setIsModalOpen(false);
+  }, []);
+
+  /**
+   * A handler function that handler the data updates
+   */
+  const onSubmitDataModal = useCallback(
+    (e: React.FormEvent<HTMLFormElement>) => {
+      const formData = new FormData(e.target as HTMLFormElement);
+
+      // clear the existing filter before re-initializing the data
+      setFilters(new Map<string, Set<string>>());
+
+      initialise(formData.get("input_csv")?.toString());
+
+      // close the modal
+      setIsModalOpen(false);
+    },
+    [initialise]
+  );
+
   const filtersCount = [
     filters.get("teams")?.size,
     filters.get("mode")?.size,
@@ -149,6 +192,11 @@ const Home: NextPage = () => {
               accept=".csv"
               hidden
             />
+            {hasData ? (
+              <Button type="button" onClick={onOpenDataModal}>
+                Edit Data
+              </Button>
+            ) : null}
             {hasData ? <Button type="reset">Reset</Button> : null}
           </form>
           {hasData ? (
@@ -163,19 +211,22 @@ const Home: NextPage = () => {
           ) : null}
         </section>
         <section className="flex-1">
-          {hasData ? (
-            <LineChart data={data} isLoading={isLoading} />
-          ) : (
-            <div className="h-full flex items-center justify-center flex-col">
+          <LineChart data={data} isLoading={isLoading}>
+            <div className="text-center">
               <label
-                className="text-2xl p-5 rounded cursor-pointer hover:opacity-80 underline"
+                className="text-2xl underline underline-offset-2 p-5 cursor-pointer"
                 htmlFor="input_data"
+                role="button"
+                tabIndex={0}
               >
                 Upload the Data File
               </label>
-              <p className="text-gray-600">No Data</p>
+              <div className="py-5">OR</div>
+              <Button variant="text" onClick={onOpenDataModal}>
+                Input CSV Data
+              </Button>
             </div>
-          )}
+          </LineChart>
         </section>
         {isFiltersOpen && (
           <FiltersPanel
@@ -185,6 +236,39 @@ const Home: NextPage = () => {
             onFiltersClose={onFiltersClose}
           />
         )}
+        {isModalOpen ? (
+          <Modal
+            onDismiss={onCloseDataModal}
+            title="Input CSV Data"
+            footer={
+              <div className="flex justify-end space-x-5">
+                <Button type="submit" form="csv_data_form" variant="primary">
+                  Submit
+                </Button>
+                <Button type="reset" form="csv_data_form" value="cancel">
+                  Cancel
+                </Button>
+              </div>
+            }
+          >
+            <form
+              id="csv_data_form"
+              className=""
+              onSubmit={onSubmitDataModal}
+              onReset={onCloseDataModal}
+            >
+              <textarea
+                name="input_csv"
+                id="input_csv"
+                defaultValue={rawData as string}
+                className="w-full border border-gray-400 p-4"
+                placeholder="Add your csv data here.."
+                rows={10}
+                autoFocus={true}
+              ></textarea>
+            </form>
+          </Modal>
+        ) : null}
       </main>
     </>
   );
