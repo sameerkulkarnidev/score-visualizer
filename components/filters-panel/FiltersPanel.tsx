@@ -82,6 +82,7 @@ const FiltersPanel = (props: Props) => {
       {/* filter panel's backdrop */}
       <section
         className="fixed right-0 h-full w-full bg-black/60"
+        data-testid="back-drop"
         onClick={onFiltersClose}
       ></section>
       <form

@@ -30,6 +30,7 @@ const Modal = (props: Props) => {
       <div
         className="fixed w-screen h-screen bg-black/80"
         onClick={onDismiss}
+        data-testid="back-drop"
       ></div>
       <section className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white w-full max-w-3xl">
         <header className="p-5 border-b border-gray-300">
